@@ -20,6 +20,9 @@ Options:
   --redis-db=DB                 Redis database [default: 0]
   --redis-password=PASSWORD     Redis password
 
+  --ssl-certfile=PATH           Path to cert file
+  --ssl-pkeyfile=PATH           Path to pkey file
+
   --logto FILE    Log output to FILE instead of console
 
   --version       show version
@@ -34,6 +37,7 @@ from docopt import docopt
 from . import log
 from .. import server
 from ..version import __version__
+import ssl
 
 logger = logging.getLogger(__name__)
 
@@ -60,19 +64,27 @@ class Interface(object):
         signal.signal(signal.SIGTERM, lambda *args: self.stop())
 
     def start(self):
-        redis_opts = {k.replace('--', '').replace('-', '_'): v
-                      for k, v in self.opts.items()
-                      if '--redis-' in k}
+        additional_opts = {k.replace('--', '').replace('-', '_'): v
+                           for k, v in self.opts.items()
+                           if '--redis-' in k}
 
         for key in ['redis_port', 'redis_db']:  # Integer arguments
-            redis_opts[key] = int(redis_opts[key])
+            additional_opts[key] = int(additional_opts[key])
+
+        if self.opts.get('--ssl-certfile'):
+            certfile_path = self.opts['--ssl-certfile']
+            keyfile_path = self.opts['--ssl-pkeyfile']
+
+            c = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            c.load_cert_chain(certfile=certfile_path, keyfile=keyfile_path)
+            additional_opts['ssl'] = c
 
         server.main(
             interface=self.opts['-i'],
             port=int(self.opts['-p']),
             debug=self.opts['-v'],
             auth_backend=self.opts['--auth-backend'],
-            **redis_opts)
+            **additional_opts)
 
     def reload(self):
         logger.warn('--- SIGHUP ---')

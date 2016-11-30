@@ -122,6 +122,8 @@ def main(interface='localhost', port=8765, debug=False, auth_backend=None,
 
     router = Router(debug)
 
+    ssl = kw.pop('ssl', None)
+
     # Transform {'redis_host': 'redis.example'} into {'host': 'redis.example'}
     redis_opts = {k.replace('redis_', ''): v
                   for k, v in kw.items()
@@ -130,11 +132,11 @@ def main(interface='localhost', port=8765, debug=False, auth_backend=None,
     auth_function = get_auth_coro(auth_backend)
 
     asyncio.async(redis_subscriber(router, **redis_opts))
-
     start_server = websockets.serve(
         partial(websocket_handler, router, auth_function),
         interface,
-        port)
+        port,
+        ssl=ssl)
 
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
