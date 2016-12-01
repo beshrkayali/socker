@@ -20,7 +20,7 @@ Options:
   --redis-db=DB                 Redis database [default: 0]
   --redis-password=PASSWORD     Redis password
 
-  --ssl-certfile=PATH           Path to cert file
+  --ssl-certfile=PATH           Path to cert file (Enable secure websocket)
   --ssl-pkeyfile=PATH           Path to pkey file
 
   --logto FILE    Log output to FILE instead of console
